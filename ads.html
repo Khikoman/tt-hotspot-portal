@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>dashLink Pro | Logout</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="static/css/main.min.css" />
+  <link rel="stylesheet" href="static/css/custom.min.css" />
+  <link rel="stylesheet" href="static/bootstrap-icons/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="static/css/utilities.min.css" />
+  <link rel="stylesheet" href="static/css/plyr.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body { position: relative; overflow-x: hidden; }
+
+    .install-feedback { font-weight: bold; animation: fadeIn 0.6s ease-in-out; }
+    .claim-animate { animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .popup-message {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #198754;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 18px;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 1s ease;
+    }
+
+    #celebrationGif {
+      display: none;
+      position: fixed;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 250px;
+      z-index: 9998;
+      animation: fadeInOut 5s ease-in-out;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    #backgroundOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 10;
+      display: none;
+    }
+
+    .video-wrapper { position: relative; z-index: 20; }
+
+    #adVideo { pointer-events: none; }
+
+  </style>
+  <script src="static/js/plyr.min.js"></script>
+</head>
+
+<body class="bg-surface-secondary">
+  <div id="backgroundOverlay"></div>
+  <img id="celebrationGif" src="static/img/celebration.gif" alt="Celebration" />
+
+  <div id="app" class="d-flex flex-column mt-5 pt-5 mb-5 pb-5">
+    <main class="d-flex flex-grow-1 align-items-center">
+      <div class="container-xxl">
+        <div class="row align-items-center justify-content-center text-center">
+          <div class="col-xl-6 col-md-12 mx-auto">
+            <div class="card">
+              <div class="video-wrapper">
+                <div class="ads-area">
+                  <video id="adVideo" width="100%" muted playsinline preload="auto">
+                    <source id="videoSource" src="" />
+                  </video>
+                  <div class="progress progress-ads rounded-0">
+                    <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                  </div>
+                  <p id="timeDisplay" class="text-muted small mt-2">Time left: 0:00</p>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <a href="#" id="watchBtn" class="btn btn-primary mb-2" onclick="startWatching()">WATCH NOW TO CLAIM FREE INTERNET</a>
+                <div id="installMsg" class="install-feedback text-success d-none mb-3"></div>
+                <button id="skipButton" class="d-none btn btn-light" onclick="autoLogin()">Claim Free WiFi Here</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <audio id="confettiSound" preload="auto">
+    <source src="static/sound/confetti.mp3" type="audio/mp3" />
+  </audio>
+  <div id="popupMessage" class="popup-message d-none">🎉 You’ve Unlocked Free Internet!</div>
+
+  <script src="static/js/jquery-3.7.1.js"></script>
+  <script src="static/js/main.js"></script>
+  <script src="static/js/app.js"></script>
+
+  <script>
+    const adVideo = document.getElementById("adVideo");
+    const videoSource = document.getElementById("videoSource");
+    const skipButton = document.getElementById("skipButton");
+    const progressBar = document.getElementById("progressBar");
+    const watchBtn = document.getElementById("watchBtn");
+    const installMsg = document.getElementById("installMsg");
+    const confettiSound = document.getElementById("confettiSound");
+    const popupMessage = document.getElementById("popupMessage");
+    const celebrationGif = document.getElementById("celebrationGif");
+    const backgroundOverlay = document.getElementById("backgroundOverlay");
+    const timeDisplay = document.getElementById("timeDisplay");
+
+    const videoAds = [
+      "static/video/ads1.mp4",
+      "static/video/ads2.mp4",
+      "static/video/ads3.mp4"
+    ];
+
+    const randomAd = videoAds[Math.floor(Math.random() * videoAds.length)];
+    videoSource.src = randomAd;
+    adVideo.load();
+
+    const player = new Plyr(adVideo, {
+      controls: [],
+      clickToPlay: false
+    });
+
+    adVideo.addEventListener("click", () => {
+      if (adVideo.muted) {
+        adVideo.muted = false;
+        adVideo.play();
+      }
+    });
+
+    const milestoneReached = { 25: false, 50: false, 75: false, 100: false };
+
+    adVideo.addEventListener("loadedmetadata", () => {
+      adVideo.addEventListener("timeupdate", () => {
+        if (!adVideo.duration || isNaN(adVideo.duration)) return;
+        const progress = Math.floor((adVideo.currentTime / adVideo.duration) * 100);
+        progressBar.style.width = progress + "%";
+        if (!adVideo.paused && !adVideo.ended) {
+          updateCountdown();
+          showMilestones(progress);
+        }
+      });
+    });
+
+    adVideo.addEventListener("ended", () => {
+      showMilestoneMessage("✅ Full reward unlocked!");
+      milestoneReached[100] = true;
+      skipButton.classList.remove("d-none");
+      skipButton.classList.add("claim-animate");
+      watchBtn.classList.add("d-none");
+      installMsg.classList.remove("d-none");
+      installMsg.innerText = "Thanks for watching!";
+      backgroundOverlay.style.display = "none";
+      showPopup("🎉 You’ve Unlocked Free Internet!");
+      playConfettiSound();
+      showCelebrationGif();
+      launchConfetti();
+      logEvent("ad_finished");
+    });
+
+    function startWatching() {
+      adVideo.muted = false;
+      adVideo.currentTime = 0;
+      adVideo.play().then(() => {
+        console.log("Video playback started with sound.");
+      }).catch((error) => {
+        console.warn("Video could not play with sound:", error);
+        showPopup("🔇 Sound was blocked. Tap video to unmute.");
+        adVideo.muted = true;
+        adVideo.play();
+      });
+
+      watchBtn.disabled = true;
+      watchBtn.innerText = "WATCHING...";
+      backgroundOverlay.style.display = "block";
+    }
+
+    function updateCountdown() {
+      const remaining = Math.floor(adVideo.duration - adVideo.currentTime);
+      const minutes = Math.floor(remaining / 60);
+      const seconds = remaining % 60;
+      const formatted = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+      watchBtn.innerText = `WATCHING... (${formatted})`;
+      timeDisplay.innerText = `Time left: ${formatted}`;
+    }
+
+    function showMilestones(progress) {
+      if (progress >= 25 && !milestoneReached[25]) {
+        showMilestoneMessage("🎉 Mini bonus unlocked!");
+        milestoneReached[25] = true;
+      }
+      if (progress >= 50 && !milestoneReached[50]) {
+        showMilestoneMessage("🎁 You're halfway there!");
+        milestoneReached[50] = true;
+      }
+      if (progress >= 75 && !milestoneReached[75]) {
+        showMilestoneMessage("⚡ Almost done!");
+        milestoneReached[75] = true;
+      }
+    }
+
+    function showMilestoneMessage(msg) {
+      popupMessage.innerText = msg;
+      popupMessage.classList.remove("d-none");
+      popupMessage.style.display = "block";
+      void popupMessage.offsetWidth;
+      setTimeout(() => {
+        popupMessage.classList.add("d-none");
+        popupMessage.style.display = "none";
+      }, 3000);
+    }
+
+    function autoLogin() {
+      const trialUsername = "T-$(mac-esc)";
+      const loginUrl = "$(link-login-only)?username=" + trialUsername + "&dst=status.html";
+      window.location.href = loginUrl;
+    }
+
+    function playConfettiSound() {
+      confettiSound.currentTime = 0;
+      confettiSound.play().catch(() => {});
+    }
+
+    function showCelebrationGif() {
+      celebrationGif.style.display = "block";
+      setTimeout(() => {
+        celebrationGif.style.display = "none";
+      }, 5000);
+    }
+
+    function showPopup(message) {
+      popupMessage.innerText = message;
+      popupMessage.classList.remove("d-none");
+      popupMessage.style.display = "block";
+      setTimeout(() => {
+        popupMessage.classList.add("d-none");
+        popupMessage.style.display = "none";
+      }, 4000);
+    }
+
+    function launchConfetti() {
+      const duration = 3000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 25, spread: 360, ticks: 60, zIndex: 1000 };
+
+      const interval = setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+        confetti({
+          ...defaults,
+          particleCount: 50 * (timeLeft / duration),
+          origin: {
+            x: Math.random(),
+            y: Math.random() - 0.2
+          }
+        });
+      }, 250);
+    }
+
+    function logEvent(event) {
+      fetch("https://script.google.com/macros/s/YOUR_WEB_APP_URL/exec", {
+        method: "POST",
+        body: JSON.stringify({ event, timestamp: new Date().toISOString() }),
+        headers: { "Content-Type": "application/json" }
+      }).catch(e => console.error("Logging failed:", e));
+    }
+  </script>
+</body>
+</html>

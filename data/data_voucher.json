@@ -1,0 +1,18 @@
+{
+    "voucher": [
+        {
+            "id": 1,
+            "limit": "2 Days",
+            "devices": "1",
+            "data": "Unlimited",
+            "total": "25"
+        },
+        {
+            "id": 2,
+            "limit": "30 days",
+            "devices": "1",
+            "data": "Unlimited",
+            "total": "500"
+        }
+    ]
+}
