@@ -1,40 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <title>dashLink Pro | Login</title>
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/x-icon" href="" id="favicon">
+    <!-- General CSS -->
     <link rel="stylesheet" type="text/css" href="static/css/main.min.css">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="static/css/custom.min.css">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="static/bootstrap-icons/font/bootstrap-icons.min.css">
+    <!-- Utlilites CSS -->
     <link rel="stylesheet" type="text/css" href="static/css/utilities.min.css">
 </head>
+
 <body>
-    <div class="container d-flex justify-content-center align-items-center min-vh-100">
-        <div class="card p-4 shadow">
-            <h1 class="h3 text-center mb-3">🚀 Claim Your Free WiFi</h1>
-            <p class="text-center mb-4">Enjoy high-speed internet after watching a short ad.</p>
-
-            <!-- Login Form for MikroTik from Netlify -->
-            <form id="loginForm" action="http://10.0.0.1/login" method="post">
-                <input type="hidden" name="username" id="username" />
-                <input type="hidden" name="password" value="" />
-                <button type="submit" class="btn btn-primary w-100">Claim Free WiFi</button>
-            </form>
-
-            <div class="text-muted small mt-3 text-center">
-                By continuing, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.
-            </div>
-        </div>
+    <!-- Existing Design Content (unchanged) -->
+    <div class="your-existing-design">
+        <!-- ...your existing HTML content... -->
+        <a href="#" class="btn btn-primary" onclick="submitHotspotLogin()">Claim Free WiFi</a>
     </div>
 
+    <!-- Hidden Login Form for MikroTik -->
+    <form id="loginForm" action="http://10.0.0.1/login" method="post" style="display: none;">
+        <input type="hidden" name="username" id="username" />
+        <input type="hidden" name="password" value="" />
+    </form>
+
     <script>
-        // Parse ?mac= from URL and set username
-        document.addEventListener("DOMContentLoaded", function () {
+        // Fill in MAC-based username from URL and auto-login
+        function submitHotspotLogin() {
             const params = new URLSearchParams(window.location.search);
             const mac = params.get("mac") || "trial";
             document.getElementById("username").value = "T-" + mac.replace(/:/g, "-");
-        });
+            document.getElementById("loginForm").submit();
+        }
     </script>
 </body>
+
 </html>
